@@ -1,5 +1,3 @@
-# Amterasu
-vue全家桶 + mongodb + nodejs
 # app
 
 > amterasu's first node app
