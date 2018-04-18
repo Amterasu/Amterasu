@@ -112,22 +112,23 @@ export default {
           notice.error(add.data.msg);
         }
       }
+    },
+    async getDetail() {
+      let detail = await api.getArticleDetail(this.$route.params.id);
+      this.content = detail.data.content;
+      this.form.title = detail.data.title;
+      this.form.gist = detail.data.gist;
+      this.form.showStatus = detail.data.showStatus ? true : false;
+      this.form.tag = detail.data.category.map((value, index, arr) => {
+        return value._id;
+      });
     }
   },
   created() {
     this.GET_TAGS();
     if (!!this.$route.params.id) {
       // 有id则为编辑
-      var that = this;
-      api.getArticleDetail(this.$route.params.id, res => {
-        that.content = res.data.content;
-        that.form.title = res.data.title;
-        that.form.gist = res.data.gist;
-        that.form.showStatus = res.data.showStatus ? true : false;
-        that.form.tag = res.data.category.map((value, index, arr) => {
-          return value._id;
-        });
-      });
+      this.getDetail();
     }
   },
   computed: {

@@ -8,6 +8,7 @@ import write from '@/pages/write/write'
 import collect from '@/pages/collect/collect'
 import about from '@/pages/about/about'
 import demo from '@/pages/demo/demo'
+import resume from '@/pages/resume/resume'
 
 Vue.use(Router)
 
@@ -55,7 +56,7 @@ const router = new Router({
     },
     {
       path: '/resume',
-      component: write
+      component: resume
     }
   ]
 })

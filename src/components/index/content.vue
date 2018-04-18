@@ -142,8 +142,9 @@ export default {
   width: 1152px;
   margin-left: auto;
   margin-right: auto;
-  padding: 36px 0 48px;
-  min-height: 100%;
+  padding: 0 0 48px;
+  margin-top: 36px;
+  min-height: 1000px;
   .nomore {
     margin: 0 auto;
     text-align: center;
