@@ -1,0 +1,6 @@
+export const SET_LOGIN_STATUS = 'SET_LOGIN_STATUS'
+export const SET_LIST = 'SET_LIST'
+export const RESET_PAGE = 'RESET_PAGE'
+export const INCREMENT_PAGE = 'INCREMENT_PAGE'
+export const SET_TAGS = 'SET_TAGS'
+export const SET_SELECTED_TAG = 'SET_SELECTED_TAG'

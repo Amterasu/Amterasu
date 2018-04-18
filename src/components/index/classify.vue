@@ -5,12 +5,12 @@
       <ul class="classify-select-list js-class-hover-cover">
         <li class="parents-nodes classify-item">
           <div class="classify-item-type">
-            <a class="classify-default" :class="current == ' '? 'current':''" href="javascript:void(0)" @click="filterByTag()" >全部</a>
+            <a class="classify-default" :class="selectedTagId == ''? 'current':''" href="javascript:void(0)" @click="filterByTag()">全部</a>
           </div>
         </li>
-        <li class="parents-nodes classify-item" v-for="(item,index) in tagArr" :key="item.id" @click="filterByTag(item._id,index+1)">
+        <li class="parents-nodes classify-item" v-for="item in allTags" :key="item._id" @click="filterByTag(item._id)">
           <div class="classify-item-type">
-            <a class="classify-default" href="javascript:void(0)" :class="current == index + 1 ? 'current':''">{{item.name}}</a>
+            <a class="classify-default" href="javascript:void(0)" :class="selectedTagId == item._id ? 'current':''">{{item.name}}</a>
           </div>
         </li>
       </ul>
@@ -19,20 +19,20 @@
 </template>
 <script>
 import { post } from "../../../static/js/common";
+import { mapState, mapActions, mapMutations } from "vuex";
 export default {
   data() {
     return {
-      classifyBarFixed: false,
-      current:' ',
-    }
+      classifyBarFixed: false
+    };
   },
   mounted() {
     window.addEventListener("scroll", this.handleScroll);
   },
   methods: {
     handleScroll() {
-      if(!document.querySelector("#content-type")){
-        return false
+      if (!document.querySelector("#content-type")) {
+        return false;
       }
       var scrollTop =
         window.pageYOffset ||
@@ -44,19 +44,22 @@ export default {
         this.classifyBarFixed = false;
       }
     },
-    filterByTag(id = "",index = ' ') {
-      this.current = index
-      let data = id ? { classId: id } : {}
-      this.$store.dispatch('getList',data)
-    }
+    filterByTag(id = "") {
+      this.SET_SELECTED_TAG(id);
+      this.RESET_PAGE();
+      this.GET_LIST();
+    },
+    ...mapActions('indexContent',["GET_LIST"]),
+    ...mapActions('tag',["GET_TAGS"]),
+    ...mapMutations('tag',["SET_SELECTED_TAG"]),
+    ...mapMutations('indexContent',["RESET_PAGE"])
   },
   created() {
-    this.$store.dispatch("getTags")
+    this.GET_TAGS();
   },
-  computed:{
-    tagArr(){
-      return this.$store.state.tag.allTags;
-    }
+  computed: {
+    ...mapState('tag',["allTags"]),
+    ...mapState('tag',["selectedTagId"])
   }
 };
 </script>

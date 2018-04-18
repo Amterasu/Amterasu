@@ -1,33 +1,33 @@
 import api from '../../api/api'
+import { SET_TAGS, SET_SELECTED_TAG } from '../mutation-types'
+import { GET_TAGS } from '../action-types'
 
 const state = {
-  allTags: [] // 列表数据
+  allTags: [], // 标签数据
+  selectedTagId: ''
 }
-
-// getters
-// const getters = {
-//   allProducts: state => state.all
-// }
 
 // actions
 const actions = {
-  getTags ({ commit }) {
-    api.getTag(list => {
-      commit('setTags', list)
-    })
+  async [GET_TAGS] ({ commit }) {
+    let tags = await api.getTag()
+    commit(SET_TAGS, tags.data)
   }
 }
 
 // mutations
 const mutations = {
-  setTags (state, list) {
-    state.allTags = list.data
+  [SET_TAGS] (state, list) {
+    state.allTags = list
+  },
+  [SET_SELECTED_TAG] (state, id) {
+    state.selectedTagId = id
   }
 }
 
 export default {
   state,
-  // getters,
   actions,
-  mutations
+  mutations,
+  namespaced: true
 }

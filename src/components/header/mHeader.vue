@@ -8,20 +8,32 @@
       <div class="menu">
         <div class="menu-box">
           <ul class="menu-list-content">
-              <router-link active-class="current" to="/index" tag="li" ><span class="menu-list-box">首页</span></router-link>
-              <router-link active-class="current" to="/write" tag="li"><span class="menu-list-box">写作</span></router-link>
-              <!-- <router-link active-class="current" to="/classlist" tag="li"><span class="menu-list-box">分类</span></router-link> -->
-              <router-link active-class="current" to="/collect" tag="li"><span class="menu-list-box">收藏</span></router-link>
-              <router-link active-class="current" to="/demo" tag="li"><span class="menu-list-box">Demo</span></router-link>
-              <router-link active-class="current" to="/about" tag="li"><span class="menu-list-box">About</span></router-link>
-              <router-link active-class="current" to="/resume" tag="li"><span class="menu-list-box">在线简历</span></router-link>
+            <router-link active-class="current" to="/index" tag="li">
+              <span class="menu-list-box">首页</span>
+            </router-link>
+            <router-link active-class="current" to="/write" tag="li">
+              <span class="menu-list-box">写作</span>
+            </router-link>
+            <!-- <router-link active-class="current" to="/classlist" tag="li"><span class="menu-list-box">分类</span></router-link> -->
+            <router-link active-class="current" to="/collect" tag="li">
+              <span class="menu-list-box">收藏</span>
+            </router-link>
+            <router-link active-class="current" to="/demo" tag="li">
+              <span class="menu-list-box">Demo</span>
+            </router-link>
+            <router-link active-class="current" to="/about" tag="li">
+              <span class="menu-list-box">About</span>
+            </router-link>
+            <router-link active-class="current" to="/resume" tag="li">
+              <span class="menu-list-box">在线简历</span>
+            </router-link>
           </ul>
           <div class="user-center user-center-unlogin">
             <ul class="unlogin" v-if="!loginStatus">
               <li>
                 <router-link :to="{ path: '/login', query: { backurl: $route.path }}" tag="span">登录</router-link>
-                <i></i>
-                <router-link to="/login" tag="span">注册</router-link>
+                <!-- <i></i> -->
+                <!-- <router-link to="/login" tag="span">注册</router-link> -->
               </li>
             </ul>
             <ul class="unlogin" v-if="loginStatus">
@@ -39,38 +51,37 @@
 </template>
 
 <script>
-import { notice } from "../../../static/js/common"
-import api from "../../api/api"
+import { notice } from "../../../static/js/common";
+import api from "../../api/api";
+import { mapState, mapActions, mapMutations } from "vuex";
 
 export default {
   name: "mHeader",
   data() {
     return {
-      tagArr: [],
+      tagArr: []
     };
   },
   computed: {
-    loginStatus() {
-      return this.$store.state.checkUser.login;
-    },
+    ...mapState("checkUser", ["loginStatus"])
   },
   beforeRouteEnter(to, from, next) {
-    this.$store.dispatch("getLoginStatus");
+    this.GET_LOGIN_STATUS();
     next();
   },
   created() {
-    this.$store.dispatch("getLoginStatus");
+    this.GET_LOGIN_STATUS();
   },
   methods: {
-    logout() {
-      let that = this
-      api.logout(res => {
-        if (res.data.code == 1) {
-          notice.success(res.data.msg);
-          that.$store.dispatch("getLoginStatus");
-          this.$router.push('/login')
-        }
-      });
+    ...mapActions("checkUser", ["GET_LOGIN_STATUS"]),
+    async logout() {
+      let that = this;
+      let logout = await api.logout();
+      if (logout.data.code == 1) {
+        notice.success(logout.data.msg);
+        that.GET_LOGIN_STATUS();
+        this.$router.push("/login");
+      }
     }
   }
 };
@@ -362,7 +373,8 @@ header nav .user-center .unlogin li {
   line-height: 60px;
 }
 
-header nav .user-center .unlogin a,header nav .user-center .unlogin span {
+header nav .user-center .unlogin a,
+header nav .user-center .unlogin span {
   margin-left: 20px;
   padding: 0;
   cursor: pointer;

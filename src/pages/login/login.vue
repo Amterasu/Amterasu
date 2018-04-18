@@ -50,7 +50,7 @@
 <script>
 import { post, get, notice } from "../../../static/js/common";
 import api from "../../api/api";
-
+import { mapActions } from 'vuex';
 export default {
   data() {
     return {
@@ -62,7 +62,7 @@ export default {
     };
   },
   methods: {
-    login() {
+    async login() {
       if (this.$vuerify.check()) {
         var result = this.captchaObj.getValidate();
         if (!result) {
@@ -77,27 +77,28 @@ export default {
         };
         let that = this;
         this.loading = true;
-        api.login(params, res => {
-          if (res.data.code === 0) {
-            that.severError = true;
-            this.loading = false;
+        let login = await api.login(params);
+        if (login.data.code === 0) {
+          that.severError = true;
+          this.loading = false;
+        } else {
+          that.severError = false;
+          this.GET_LOGIN_STATUS();
+          if (this.$route.query && this.$route.query.backurl) {
+            this.$router.push(this.$route.query.backurl);
           } else {
-            that.severError = false;
-            that.$store.dispatch("getLoginStatus");
-            if (this.$route.query && this.$route.query.backurl) {
-              this.$router.push(this.$route.query.backurl);
-            } else {
-              this.$router.push("/index");
-            }
+            this.$router.push("/index");
           }
-        });
+        }
+        
       }
     },
     handler(captchaObj) {
       captchaObj.appendTo("#captcha");
       this.captchaObj = captchaObj;
       // 更多接口说明请参见：http://docs.geetest.com/install/client/web-front/
-    }
+    },
+    ...mapActions('checkUser',['GET_LOGIN_STATUS'])
   },
   vuerify: {
     username: {
@@ -153,8 +154,8 @@ export default {
   color: #666;
   margin: 0;
 }
-.geetest_holder{
-  width: 336px!important;
+.geetest_holder {
+  width: 336px !important;
 }
 .el-icon-error {
   font-size: 20px;

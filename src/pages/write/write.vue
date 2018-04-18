@@ -3,7 +3,7 @@
 
     <div class="write-content">
       <div class="write-main">
-        <mavon-editor v-model="content" ref=md @imgAdd="$imgAdd"  :ishljs="true" :codeStyle="style"> </mavon-editor>
+        <mavon-editor v-model="content" ref=md @imgAdd="$imgAdd" :ishljs="true" :codeStyle="style"> </mavon-editor>
       </div>
       <el-form ref="form" :model="form" label-width="80px" style="padding:20px 25px;">
         <el-form-item label="文章标题">
@@ -34,7 +34,7 @@
 import api from "../../api/api";
 import { post, notice } from "../../../static/js/common";
 import axios from "axios";
-
+import { mapActions } from "vuex";
 export default {
   data() {
     return {
@@ -45,10 +45,11 @@ export default {
         showStatus: true,
         tag: []
       },
-      style:'vs'
+      style: "agate"
     };
   },
   methods: {
+    ...mapActions("tag", ["GET_TAGS"]),
     // 绑定@imgAdd event
     $imgAdd(pos, $file) {
       // 第一步.将图片上传到服务器.
@@ -69,7 +70,7 @@ export default {
         this.$refs.md.$img2Url(pos, data.data.newPath);
       });
     },
-    onSubmit() {
+    async onSubmit() {
       if (!this.content) {
         notice.error("未填写内容");
         return;
@@ -95,28 +96,26 @@ export default {
       };
       if (!!this.$route.params.id) {
         data.id = this.$route.params.id;
-        api.updateArticle(data, res => {
-          if (res.data.code == 1) {
-            notice.success(res.data.msg);
-            this.$router.push('/index')
-          } else {
-            notice.error(res.data.msg);
-          }
-        });
+        let update = await api.updateArticle(data);
+        if (update.data.code == 1) {
+          notice.success(update.data.msg);
+          this.$router.push("/index");
+        } else {
+          notice.error(update.data.msg);
+        }
       } else {
-        api.addArticle(data, res => {
-          if (res.data.code == 1) {
-            notice.success(res.data.msg);
-            this.$router.push('/index')
-          } else {
-            notice.error(res.data.msg);
-          }
-        });
+        let add = await api.addArticle(data);
+        if (add.data.code == 1) {
+          notice.success(add.data.msg);
+          this.$router.push("/index");
+        } else {
+          notice.error(add.data.msg);
+        }
       }
     }
   },
   created() {
-    this.$store.dispatch("getTags");
+    this.GET_TAGS();
     if (!!this.$route.params.id) {
       // 有id则为编辑
       var that = this;
@@ -135,8 +134,8 @@ export default {
     tagArr() {
       return this.$store.state.tag.allTags;
     },
-    btntext(){
-      return !!this.$route.params.id ? '确认修改' : '立即创建'
+    btntext() {
+      return !!this.$route.params.id ? "确认修改" : "立即创建";
     }
   }
 };
@@ -151,7 +150,9 @@ export default {
   overflow: hidden;
   vertical-align: top;
   background: #fff;
-  min-height: 1330px;
+  // min-height: 1330px;
+  min-height: 530px;
+
   border-radius: 4px;
   background: #fff;
   overflow: hidden;

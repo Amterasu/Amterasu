@@ -6,17 +6,18 @@ import { Message, Notification } from 'element-ui'
  * @DateTime 2018-4-10
  * @param    {[string]}   url [地址]
  * @param    {[object]}   data   [数据]
+ * @param    {{object}}  options 这个参数供扩展使用，暂时没有加
  */
-export const post = (url, data) => {
+export const post = (url, data, options = { }) => {
   if (!url) {
     console.log(new Error('地址是必须的'))
     return false
   }
-  return axios({
+  return axios(Object.assign({
     method: 'POST',
     url: url,
     data: data
-  }).then(res => {
+  }, options)).then(res => {
     return Promise.resolve(res)
   }, res => {
     return Promise.reject(res)

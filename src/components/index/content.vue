@@ -1,7 +1,7 @@
 <template>
-  <div class="content-type" id="content-type">
-    <waterfall :align="align" :line-gap="384" :watch="items">
-      <waterfall-slot v-for="(item, index) in items" width="372" :height="item.cheight" :order="index" :key="item._id">
+  <div class="content-type" id="content-type" v-loading="contentLoading">
+    <waterfall :align="align" :line-gap="384" :watch="all">
+      <waterfall-slot v-for="(item, index) in all" width="372" :height="item.cheight" :order="index" :key="item._id">
         <div class="item">
           <div class="foradmin" v-if="loginStatus">{{item.showStatus == 1?'显示':'隐藏'}}</div>
           <div class="clearfix article-tit">
@@ -13,24 +13,29 @@
             <div class="bottom-info clearfix">
               <span v-for="tag in item.category" :key="tag.id" class="tag">{{tag.name}}</span>
               <a href="javascript:void(0)" target="_blank" class="fr blue" @click='turntoDetail(item._id)'>阅读全文</a>
-              <a href="javascript:void(0)" target="_blank" class="fr blue" style="margin:0 10px" @click='editArticle(item._id)'>编辑</a>
+              <a href="javascript:void(0)" target="_blank" class="fr blue" style="margin:0 10px" @click='editArticle(item._id)' v-if="loginStatus">编辑</a>
             </div>
           </div>
         </div>
       </waterfall-slot>
     </waterfall>
+    <div class="nomore" v-show="nomore">没有更多</div>
+    <!-- <div class="nomore" v-show="nodata">暂无数据</div> -->
   </div>
 </template>
 
 <script>
 import Waterfall from "vue-waterfall/lib/waterfall";
 import WaterfallSlot from "vue-waterfall/lib/waterfall-slot";
-import { post } from "../../../static/js/common";
-
+import { post, notice } from "../../../static/js/common";
+import { mapState, mapActions, mapMutations } from "vuex";
 export default {
   data() {
     return {
-      align: "center"
+      align: "center",
+      contentLoading: true,
+      timeout: false, // 滚动节流 true 可请求 false不可请求
+      nomore: false,
     };
   },
   components: {
@@ -39,23 +44,94 @@ export default {
   },
   created() {
     // 发送 POST 请求
-    this.$store.dispatch("getList");
+    let that = this;
+    this.GET_LIST().then(() => {
+      that.timeout = true;
+      that.contentLoading = false;
+    });
   },
   computed: {
-    items() {
-      return this.$store.state.indexContent.all;
-    },
-    loginStatus() {
-      return this.$store.state.checkUser.login;
-    }
+    ...mapState('indexContent',["all", "page", "count"]),
+    ...mapState('checkUser',["loginStatus"]),
   },
   methods: {
+    ...mapActions('indexContent',["GET_LIST"]),
+    ...mapMutations('indexContent',["INCREMENT_PAGE"]),
     turntoDetail(id) {
       this.$router.push({ path: `/detail/${id}` });
     },
     editArticle(id) {
       this.$router.push({ path: `/write/${id}` });
+    },
+    onScroll() {
+      let that = this;
+      if (
+        this.timeout &&
+        this.getScrollTop() + this.getWindowHeight() == this.getScrollHeight()
+      ) {
+        if (this.count < this.page * 10) {
+          // notice.error('到底了')
+          this.nomore = true;
+          return;
+        }
+        this.timeout = false;
+        this.contentLoading = true;
+        setTimeout(() => {
+          this.INCREMENT_PAGE();
+          this.GET_LIST({
+            page: this.page
+          }).then(res => {
+            that.timeout = true;
+            that.contentLoading = false;
+          });
+        }, 300);
+      }
+    },
+    getScrollTop() {
+      var scrollTop = 0,
+        bodyScrollTop = 0,
+        documentScrollTop = 0;
+      if (document.body) {
+        bodyScrollTop = document.body.scrollTop;
+      }
+      if (document.documentElement) {
+        documentScrollTop = document.documentElement.scrollTop;
+      }
+      scrollTop =
+        bodyScrollTop - documentScrollTop > 0
+          ? bodyScrollTop
+          : documentScrollTop;
+      return scrollTop;
+    },
+    //文档的总高度
+    getScrollHeight() {
+      var scrollHeight = 0,
+        bodyScrollHeight = 0,
+        documentScrollHeight = 0;
+      if (document.body) {
+        bodyScrollHeight = document.body.scrollHeight;
+      }
+      if (document.documentElement) {
+        documentScrollHeight = document.documentElement.scrollHeight;
+      }
+      scrollHeight =
+        bodyScrollHeight - documentScrollHeight > 0
+          ? bodyScrollHeight
+          : documentScrollHeight;
+      return scrollHeight;
+    },
+    getWindowHeight() {
+      var windowHeight = 0;
+      if (document.compatMode == "CSS1Compat") {
+        windowHeight = document.documentElement.clientHeight;
+      } else {
+        windowHeight = document.body.clientHeight;
+      }
+      return windowHeight;
     }
+  },
+  mounted() {
+    window.addEventListener("scroll", this.onScroll);
   }
 };
 </script>
@@ -67,11 +143,23 @@ export default {
   margin-left: auto;
   margin-right: auto;
   padding: 36px 0 48px;
+  min-height: 100%;
+  .nomore {
+    margin: 0 auto;
+    text-align: center;
+    background: #fff;
+    margin-top: 20px;
+    width: 98%;
+    height: 40px;
+    line-height: 40px;
+    border-radius: 4px;
+  }
   .item {
     width: 362px;
     height: 90%;
     margin-top: 5%;
     // margin-left: 9px;
+    margin-left: 3%;
     box-sizing: border-box;
     background: #fff;
     box-shadow: 0 4px 8px 0 rgba(7, 17, 27, 0.05);

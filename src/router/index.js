@@ -1,13 +1,17 @@
 import Vue from 'vue'
 import Router from 'vue-router'
+import store from '../store/index'
 import index from '@/components/index/index'
-import detail from '@/components/detail/articleDetail'
-import login from '@/components/login/login'
-import write from '@/components/write/write'
+import detail from '@/pages/detail/articleDetail'
+import login from '@/pages/login/login'
+import write from '@/pages/write/write'
+import collect from '@/pages/collect/collect'
+import about from '@/pages/about/about'
+import demo from '@/pages/demo/demo'
 
 Vue.use(Router)
 
-export default new Router({
+const router = new Router({
   routes: [
     {
       path: '/',
@@ -39,15 +43,15 @@ export default new Router({
     },
     {
       path: '/collect',
-      component: write
+      component: collect
     },
     {
       path: '/demo',
-      component: write
+      component: demo
     },
     {
       path: '/about',
-      component: write
+      component: about
     },
     {
       path: '/resume',
@@ -55,3 +59,12 @@ export default new Router({
     }
   ]
 })
+
+router.beforeEach((to, from, next) => {
+  if (to.fullPath === '/' || to.fullPath === '/index') {
+    store.commit('indexContent/RESET_PAGE')
+  }
+  next()
+})
+
+export default router

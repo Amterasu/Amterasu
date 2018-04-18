@@ -6,10 +6,10 @@ const formidable = require('formidable')
 const fs = require('fs')
 const path = require('path')
 const ObjectId = require('mongodb').ObjectId
-var Geetest = require('gt3-sdk')
-var app = express()
-var bodyParser = require('body-parser')
-var session = require('express-session')
+const Geetest = require('gt3-sdk')
+const app = express()
+const bodyParser = require('body-parser')
+const session = require('express-session')
 app.use(bodyParser.json())
 app.use(bodyParser.urlencoded({ extended: true }))
 app.use(session({
@@ -19,11 +19,10 @@ app.use(session({
 }))
 
 // 极验的key 与 id
-var slide = new Geetest({
+const slide = new Geetest({
   geetest_id: '71f476b6a0894780029f6f9a905adf20',
   geetest_key: 'f1fc1ed69f1e6e995d92cc308c154344'
 })
-
 // 请求验证码
 router.get('/api/gt/register-slide', function (req, res) {
   // 向极验申请每次验证所需的challenge
@@ -34,17 +33,13 @@ router.get('/api/gt/register-slide', function (req, res) {
       res.send(err)
       return
     }
-
     if (!data.success) {
       // 进入 failback，如果一直进入此模式，请检查服务器到极验服务器是否可访问
       // 可以通过修改 hosts 把极验服务器 api.geetest.com 指到不可访问的地址
-
       // 为以防万一，你可以选择以下两种方式之一：
-
       // 1. 继续使用极验提供的failback备用方案
       req.session.fallback = true
       res.send(data)
-
       // 2. 使用自己提供的备用方案
       // todo
     } else {
@@ -54,48 +49,80 @@ router.get('/api/gt/register-slide', function (req, res) {
     }
   })
 })
-/** ************ 创建(create) 读取(get) 更新(update) 删除(delete) **************/
 // 获取文章
 router.post('/api/getList', (req, res) => {
+  const { page = 1, pageSize = 10 } = req.body
   let filter = req.body
+  filter.page = page
+  filter.pageSize = pageSize
   if (req.body.classId) {
     //  根据分类id查询
     if (req.session.sign) { // 检查用户是否已经登录，登录后返回隐藏状态的文章
-      db.Article.find({ 'category._id': ObjectId(filter.classId) }).sort({ updated: -1 }).exec((err, data) => {
+      db.Article.find({ 'category._id': ObjectId(filter.classId) }).skip((filter.page - 1) * filter.pageSize).limit(filter.pageSize).sort({ updated: -1 }).exec((err, data) => {
         if (err) {
           res.send(err)
           return
         }
-        res.send(data)
+        let findData = { data: data }
+        const findAccount = db.Article.find({ 'category._id': ObjectId(filter.classId) }).count()
+        findAccount.then(count => {
+          res.send(Object.assign({}, findData, { count: count, code: 1 }))
+        }, count => {
+          res.send(count)
+        })
       })
     } else { // 否则只展示显示状态的文章
-      db.Article.find({ 'category._id': ObjectId(filter.classId), 'showStatus': true }).sort({ updated: -1 }).exec((err, data) => {
+      db.Article.find({ 'category._id': ObjectId(filter.classId), 'showStatus': true }).skip((filter.page - 1) * filter.pageSize).limit(filter.pageSize).sort({ updated: -1 }).exec((err, data) => {
         if (err) {
           res.send(err)
           return
         }
-        res.send(data)
+        // let findData = data
+        let findData = { data: data }
+
+        const findAccount = db.Article.find({ 'category._id': ObjectId(filter.classId), 'showStatus': true }).count()
+        findAccount.then(count => {
+          res.send(Object.assign({}, findData, { count: count, code: 1 }))
+        }, count => {
+          res.send(count)
+        })
       })
     }
   } else {
     // 查询
     if (req.session.sign) { // 检查用户是否已经登录，登录后返回隐藏状态的文章
-      db.Article.find(filter).sort({ updated: -1 }).exec((err, data) => {
+      db.Article.find({}).skip((filter.page - 1) * filter.pageSize).limit(filter.pageSize).sort({ updated: -1 }).exec((err, data) => {
         if (err) {
           res.send(err)
           return
         }
-        res.send(data)
+        // let findData = data
+        let findData = { data: data }
+
+        const findAccount = db.Article.find({}).count()
+        findAccount.then(count => {
+          res.send(Object.assign({}, findData, { count: count, code: 1 }))
+        }, count => {
+          res.send(count)
+        })
       })
     } else {
       // 否则只展示显示状态的文章
-      filter.showStatus = true
-      db.Article.find(filter).sort({ updated: -1 }).exec((err, data) => {
+      // filter.showStatus = true
+      db.Article.find({ 'showStatus': true }).skip((filter.page - 1) * filter.pageSize).limit(filter.pageSize).sort({ updated: -1 }).exec((err, data) => {
         if (err) {
           res.send(err)
           return
         }
-        res.send(data)
+        // let findData = data
+        let findData = { data: data }
+
+        const findAccount = db.Article.find({ 'showStatus': true }).count()
+        findAccount.then(count => {
+          res.send(Object.assign({}, findData, { count: count, code: 1 }))
+        }, count => {
+          res.send(count)
+        })
       })
     }
   }
@@ -107,7 +134,23 @@ router.post('/api/getTag', (req, res) => {
       res.send(err)
       return
     }
-    res.send(data)
+    let fliter = {}
+    if (req.session.sign) { // 检查用户是否已经登录 已登录返回所有文章中使用的标签名，否则返回可见文章中使用的标签名,也就是说没有没数据的情况，除了一个文章都没有的情况
+      fliter = {}
+    } else {
+      fliter = { showStatus: true }
+    }
+    // 获取所有有数据的标签名
+    const promises = data.map((value, index, arr) => db.Article.findOne(Object.assign({ 'category._id': value._id }, fliter)).then(res => {
+      if (res) {
+        return value
+      }
+    }))
+    Promise.all(promises).then(backdata => {
+      res.send(backdata.filter(item => {
+        return item !== undefined && item !== null
+      }))
+    })
   })
 })
 
@@ -250,7 +293,7 @@ router.post('/api/checkUser', (req, res) => {
 
 /* 图片上传路由 */
 router.post('/uploader', function (req, res) {
-  var form = new formidable.IncomingForm() // 创建上传表单
+  const form = new formidable.IncomingForm() // 创建上传表单
   form.encoding = 'utf-8' // 设置编辑
   form.uploadDir = path.join(__dirname, '../', './avatar/') // 设置上传目录
   form.keepExtensions = true // 保留后缀
@@ -264,7 +307,7 @@ router.post('/uploader', function (req, res) {
       return
     }
 
-    var extName = '' // 后缀名
+    let extName = '' // 后缀名
     switch (files.image.type) {
       case 'image/pjpeg':
         extName = 'jpg'
@@ -286,11 +329,11 @@ router.post('/uploader', function (req, res) {
       return
     }
 
-    var avatarName = Math.random() + '.' + extName
+    const avatarName = Math.random() + '.' + extName
     // 图片写入地址；
-    var newPath = form.uploadDir + avatarName
+    const newPath = form.uploadDir + avatarName
     // 显示地址；
-    // var showUrl = path.join(__dirname, '../', './avatar/') + avatarName
+    // const showUrl = path.join(__dirname, '../', './avatar/') + avatarName
     fs.renameSync(files.image.path, newPath) // 重命名
     res.json({
       'newPath': 'http://47.95.9.245/' + avatarName

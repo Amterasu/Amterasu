@@ -8,34 +8,45 @@
         </div>
       </div>
       <div class="help-main">
-        <mavon-editor v-model="article.content" defaultOpen="preview" :toolbarsFlag="false" :subfield="false"> </mavon-editor>
+        <mavon-editor v-model="article.content" defaultOpen="preview" :toolbarsFlag="false" :subfield="false" :codeStyle="style"> </mavon-editor>
       </div>
     </div>
   </div>
 </template>
 
 <script>
-import { get, formatDate } from "../../../static/js/common"
-import api from '../../api/api'
+import { get, formatDate } from "../../../static/js/common";
+import api from "../../api/api";
 
 export default {
-  data(){
+  data() {
     return {
-      article:{}
+      article: {},
+      style: "agate"
+    };
+  },
+  created() {
+    var that = this;
+    this.getArticleList();
+  },
+  computed: {
+    createTime() {
+      return formatDate(
+        new Date(new Date(this.article.created).getTime()),
+        "Y年M月D日"
+      );
+    },
+    updateTime() {
+      return formatDate(
+        new Date(new Date(this.article.updated).getTime()),
+        "Y年M月D日"
+      );
     }
   },
-  created(){
-    var that = this;
-    api.getArticleDetail(this.$route.params.id, res=>{
-      that.article = res.data;
-    })
-  },
-  computed:{
-    createTime(){
-      return formatDate(new Date(new Date(this.article.created).getTime()),'Y年M月D日')
-    },
-    updateTime(){
-      return formatDate(new Date(new Date(this.article.updated).getTime()),'Y年M月D日')
+  methods: {
+    async getArticleList() {
+      let articleList = await api.getArticleDetail(this.$route.params.id);
+      this.article = articleList.data;
     }
   }
 };
@@ -50,7 +61,7 @@ export default {
   overflow: hidden;
   vertical-align: top;
   background: #fff;
-  min-height: 1330px;
+  min-height: 530px;
   border-radius: 4px;
   background: #fff;
   overflow: hidden;
@@ -58,7 +69,7 @@ export default {
   margin-top: 40px;
   margin-bottom: 40px;
   .header {
-    width: 95%;
+    // width: 95%;
     height: 55px;
     line-height: 55px;
     position: relative;
@@ -75,7 +86,7 @@ export default {
     .allrank span:nth-of-type(2) {
       font-size: 12px;
       margin: 1px 40px;
-      float:right;
+      float: right;
     }
     .allrank span {
       font-size: 12px;

@@ -1,27 +1,23 @@
 import api from '../../api/api'
+import { SET_LOGIN_STATUS } from '../mutation-types'
+import { GET_LOGIN_STATUS } from '../action-types'
 
 const state = {
-  login: false // 是否登录
+  loginStatus: false // 是否登录
 }
-
-// getters
-// const getters = {
-//   allProducts: state => state.login
-// }
 
 // actions
 const actions = {
-  getLoginStatus ({ commit }) {
-    api.checkUser(res => {
-      commit('setLoginStatus', res)
-    })
+  async [GET_LOGIN_STATUS] ({ commit }) {
+    let loginStatus = await api.checkUser()
+    commit(SET_LOGIN_STATUS, loginStatus)
   }
 }
 
 // mutations
 const mutations = {
-  setLoginStatus (state, res) {
-    state.login = res.data.code
+  [SET_LOGIN_STATUS] (state, res) {
+    state.loginStatus = res.data.code
   }
 }
 
@@ -29,5 +25,6 @@ export default {
   state,
   // getters,
   actions,
-  mutations
+  mutations,
+  namespaced: true
 }

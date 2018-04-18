@@ -1,11 +1,7 @@
 <template>
   <div id="app">
     <MHeader></MHeader>
-    <transition name="component-fade" mode="out-in">
-      <!-- <keep-alive> -->
         <router-view></router-view>
-      <!-- </keep-alive> -->
-    </transition>
   </div>
 </template>
 
